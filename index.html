@@ -3,115 +3,85 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>J.A.R.V.I.S.</title>
-  <meta name="description" content="A JARVIS-style voice assistant powered by Google Gemini." />
+  <title>Bangkok Rail — BTS · MRT · Airport Link · SRT Red</title>
+  <meta name="description" content="Explore Bangkok's rail network: BTS Skytrain, MRT Blue & Purple, Yellow & Pink monorails, the Airport Rail Link and SRT Red Lines — with interchanges, operating times and fares." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="grid-bg"></div>
-
   <header class="topbar">
     <div class="brand">
-      <span class="brand-mark">J.A.R.V.I.S.</span>
-      <span class="brand-sub">Just A Rather Very Intelligent System</span>
+      <span class="logo" aria-hidden="true">
+        <span class="logo-bar" style="--c:#5cb531"></span>
+        <span class="logo-bar" style="--c:#1f4fa0"></span>
+        <span class="logo-bar" style="--c:#7d3f98"></span>
+        <span class="logo-bar" style="--c:#d2232a"></span>
+      </span>
+      <span class="brand-text">
+        <span class="brand-title">Bangkok Rail</span>
+        <span class="brand-sub">รถไฟฟ้ากรุงเทพ · interactive network guide</span>
+      </span>
     </div>
-    <div class="status" id="statusChip">
-      <span class="status-dot" id="statusDot"></span>
-      <span id="statusText">Offline</span>
+    <div class="search-wrap">
+      <input id="search" class="search" type="search" placeholder="Search a station…" autocomplete="off" aria-label="Search stations" />
+      <div id="searchResults" class="search-results" hidden></div>
     </div>
-    <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">⚙</button>
   </header>
 
-  <main class="stage">
-    <!-- Reactor / orb -->
-    <div class="reactor-wrap">
-      <div class="reactor" id="reactor">
-        <div class="reactor-ring ring-outer"></div>
-        <div class="reactor-ring ring-mid"></div>
-        <div class="reactor-ring ring-inner"></div>
-        <div class="reactor-core"></div>
-        <canvas id="viz" class="viz"></canvas>
-      </div>
-      <div class="reactor-caption" id="reactorCaption">Standing by</div>
-    </div>
+  <nav class="tabs" id="tabs" role="tablist">
+    <button class="tab active" data-tab="network" role="tab">Network</button>
+    <button class="tab" data-tab="interchanges" role="tab">Interchanges</button>
+    <button class="tab" data-tab="planner" role="tab">Fare &amp; time</button>
+    <button class="tab" data-tab="info" role="tab">Lines &amp; hours</button>
+  </nav>
 
-    <!-- Conversation -->
-    <section class="conversation" id="conversation" aria-live="polite">
-      <div class="msg jarvis">
-        <div class="msg-role">JARVIS</div>
-        <div class="msg-text">Good day, sir. Add your Gemini API key in settings and I shall be at your service.</div>
+  <main class="content">
+    <!-- NETWORK ------------------------------------------------------------>
+    <section id="tab-network" class="panel active" role="tabpanel">
+      <div class="line-chips" id="lineChips"></div>
+      <div id="lineDiagrams" class="diagrams"></div>
+    </section>
+
+    <!-- INTERCHANGES ------------------------------------------------------->
+    <section id="tab-interchanges" class="panel" role="tabpanel">
+      <p class="lead">Stations where you can change between lines. Switching operator usually means tapping out and buying a new ticket (fares are charged per operator unless a through-fare applies).</p>
+      <div id="interchangeList" class="interchange-list"></div>
+    </section>
+
+    <!-- PLANNER ------------------------------------------------------------>
+    <section id="tab-planner" class="panel" role="tabpanel">
+      <p class="lead">Estimate fare and travel time between two stations <strong>on the same line</strong>. For multi-line trips, plan each leg and add them up — interchanges are listed on each result.</p>
+      <div class="planner">
+        <label class="field">
+          <span>Line</span>
+          <select id="planLine"></select>
+        </label>
+        <label class="field">
+          <span>From</span>
+          <select id="planFrom"></select>
+        </label>
+        <label class="field">
+          <span>To</span>
+          <select id="planTo"></select>
+        </label>
       </div>
+      <div id="planResult" class="plan-result" hidden></div>
+    </section>
+
+    <!-- INFO --------------------------------------------------------------->
+    <section id="tab-info" class="panel" role="tabpanel">
+      <div id="infoCards" class="info-cards"></div>
     </section>
   </main>
 
-  <!-- Composer -->
-  <form class="composer" id="composer">
-    <button type="button" class="mic-btn" id="micBtn" title="Speak" aria-label="Voice input">
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-        <path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/>
-        <path fill="currentColor" d="M19 11a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.92V21a1 1 0 1 0 2 0v-3.08A7 7 0 0 0 19 11z"/>
-      </svg>
-    </button>
-    <input type="text" id="prompt" class="prompt-input" placeholder="Speak or type a command, sir…" autocomplete="off" />
-    <button type="submit" class="send-btn" id="sendBtn" title="Send" aria-label="Send">
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-        <path fill="currentColor" d="M3 11l18-8-8 18-2-7-8-3z"/>
-      </svg>
-    </button>
-  </form>
+  <footer class="footer">
+    <p id="footerNote"></p>
+    <p class="disclaimer">Unofficial reference. Station orders and codes follow the operators' public maps; times and fares are indicative — always confirm with the official operator before travelling.</p>
+  </footer>
 
-  <!-- Settings panel -->
-  <div class="overlay" id="overlay" hidden></div>
-  <aside class="settings" id="settings" hidden aria-label="Settings">
-    <div class="settings-head">
-      <h2>Configuration</h2>
-      <button class="icon-btn" id="closeSettings" aria-label="Close settings">✕</button>
-    </div>
-
-    <label class="field">
-      <span class="field-label">Gemini API key</span>
-      <input type="password" id="apiKey" placeholder="AIza…" autocomplete="off" />
-      <span class="field-hint">Stored only in this browser (localStorage). Never uploaded or committed.
-        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Get a free key →</a>
-      </span>
-    </label>
-
-    <label class="field">
-      <span class="field-label">Model</span>
-      <select id="model">
-        <option value="gemini-2.5-flash">gemini-2.5-flash (fast, recommended)</option>
-        <option value="gemini-2.0-flash">gemini-2.0-flash</option>
-        <option value="gemini-2.5-pro">gemini-2.5-pro (smartest, slower)</option>
-        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-      </select>
-    </label>
-
-    <label class="field row">
-      <span class="field-label">Speak replies aloud</span>
-      <input type="checkbox" id="ttsToggle" checked />
-    </label>
-
-    <label class="field">
-      <span class="field-label">JARVIS voice</span>
-      <select id="voiceSelect"><option value="">System default</option></select>
-      <span class="field-hint">A British English voice sounds most like JARVIS, if available.</span>
-    </label>
-
-    <label class="field">
-      <span class="field-label">Personality</span>
-      <textarea id="persona" rows="5"></textarea>
-      <span class="field-hint">The system instruction sent to Gemini.</span>
-    </label>
-
-    <div class="settings-actions">
-      <button class="btn ghost" id="resetPersona" type="button">Reset persona</button>
-      <button class="btn" id="saveSettings" type="button">Save</button>
-    </div>
-  </aside>
-
+  <script src="data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
