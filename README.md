@@ -1,69 +1,77 @@
-# J.A.R.V.I.S.
+# Bangkok Rail — interactive network guide
 
-A browser-based voice assistant that mimics Tony Stark's JARVIS, powered by **Google Gemini**.
-Pure static site — no build step, no backend — so it deploys straight to **GitHub Pages**.
+An interactive, static website for **Bangkok's urban rail network**: the BTS
+Skytrain, the MRT (Blue, Purple, Yellow, Pink), the Airport Rail Link and the
+SRT Red Lines — with every station, all interchanges, operating hours, train
+frequencies and indicative fares.
 
-![status](https://img.shields.io/badge/stack-HTML%2FCSS%2FJS-29d3ff) ![ai](https://img.shields.io/badge/AI-Google%20Gemini-ffb648)
+Pure HTML/CSS/JS — no build step, no backend — so it deploys straight to
+**GitHub Pages**.
+
+![stack](https://img.shields.io/badge/stack-HTML%2FCSS%2FJS-4da3ff) ![data](https://img.shields.io/badge/lines-10-5cb531)
+
+## What's covered
+
+| Line | Operator | Type |
+|---|---|---|
+| BTS Sukhumvit (light green) | BTS | Elevated heavy rail |
+| BTS Silom (dark green) | BTS | Elevated heavy rail |
+| Gold Line | BTS / Krungthep Thanakom | People mover |
+| MRT Blue Line | BEM | Underground + elevated (loop) |
+| MRT Purple Line | BEM | Elevated heavy rail |
+| MRT Yellow Line | EBM | Straddle monorail |
+| MRT Pink Line | NBM | Straddle monorail |
+| Airport Rail Link | SRTET | Airport / commuter |
+| SRT Dark Red Line | SRTET | Commuter rail |
+| SRT Light Red Line | SRTET | Commuter rail |
 
 ## Features
 
-- **Conversational AI** via the Gemini REST API (streaming responses, typed out live)
-- **Voice in** — speech recognition (Web Speech API)
-- **Voice out** — text-to-speech, prefers a British English voice for the JARVIS feel
-- **Arc-reactor UI** — animated reactor that reacts to listening / thinking states
-- **Editable personality** — tweak the system instruction in settings
-- **Your key stays yours** — the Gemini API key is stored only in your browser's `localStorage`; it is never committed or uploaded anywhere except directly to Google's API
+- **Network view** — colour-coded line diagrams with every station, its official
+  code (e.g. `E4`, `BL22`, `A8`) and interchange tags. Filter lines on/off.
+- **Interchanges** — auto-generated list of every station where you can change
+  lines, showing the codes on each line.
+- **Fare & time planner** — pick a line and two stations to get an estimated
+  fare, the number of stops and an in-train time estimate, plus the interchanges
+  you'll pass.
+- **Lines & hours** — per-line cards with operator, type, operating hours,
+  frequency, fare range and a link to the official site.
+- **Station search** — jump straight to any station's line.
 
-## Quick start (local)
+## Run locally
 
-1. Get a free Gemini API key: https://aistudio.google.com/app/apikey
-2. Open `index.html` in Chrome or Edge (voice input needs a Chromium browser).
-3. Click ⚙ → paste your key → **Save**.
-4. Press the mic 🎙 and speak, or just type.
+It's a static site — just open `index.html`, or serve the folder:
 
-> Voice input requires the page to be served over `https://` or `localhost`.
-> When hosted on GitHub Pages (https) it works out of the box.
+```bash
+python3 -m http.server 8000
+# then open http://localhost:8000
+```
 
 ## Deploy to GitHub Pages
 
-This repo is already wired to publish from the `main` branch root. Once pushed:
+1. Push to the repo.
+2. **Settings → Pages** → Source: `Deploy from a branch` → pick your branch and
+   `/ (root)`.
+3. The site goes live at `https://<username>.github.io/<repo>/`.
 
-1. The repo's **Settings → Pages** source is set to `main` / `/ (root)`.
-2. Your site goes live at `https://<username>.github.io/<repo>/`.
+A `.nojekyll` file is included so GitHub Pages serves the files as-is.
 
-To push updates:
+## Editing the data
 
-```bash
-git add -A
-git commit -m "Update JARVIS"
-git push
-```
+All network data lives in [`data.js`](data.js) as a single `NETWORK` object —
+one entry per line, each with its ordered station list and fare/hours metadata.
+Interchanges are declared per station via the `x: [...]` array (a list of the
+other line ids that meet there) and the Interchanges tab is generated from them,
+so you only edit data in one place.
 
-GitHub Pages redeploys automatically on every push to `main`.
+## Accuracy
 
-## Configuration
-
-All settings live behind the ⚙ icon and persist in `localStorage`:
-
-| Setting | Notes |
-|---|---|
-| **API key** | Your Google Gemini key |
-| **Model** | `gemini-2.5-flash` (default), `gemini-2.0-flash`, `gemini-2.5-pro`, `gemini-1.5-flash` |
-| **Speak replies** | Toggle text-to-speech |
-| **JARVIS voice** | Pick any installed system voice |
-| **Personality** | The system instruction sent to Gemini |
-
-## Notes on the API key & static hosting
-
-Because GitHub Pages serves static files only, there is no server to keep a secret. This app
-deliberately uses **your own** key, entered at runtime and stored locally — so nothing sensitive
-ever lands in the repository. If you later want a shared, key-hidden deployment, put a tiny
-serverless proxy (Cloudflare Workers / Vercel) in front of Gemini and point the app at it.
+Station orders and codes follow the operators' public maps. **Operating hours,
+train frequencies and fares are indicative figures for planning** and the fare
+estimator interpolates across each line — always confirm with the official
+operator before you travel. Data last reviewed June 2026.
 
 ## Tech
 
-Plain HTML, CSS, and vanilla JavaScript. No dependencies, no bundler. Fonts via Google Fonts.
-
----
-
-Built for personal use. "Sometimes you gotta run before you can walk."
+Plain HTML, CSS and vanilla JavaScript. No dependencies, no bundler. Fonts via
+Google Fonts (Kanit + IBM Plex Mono).
